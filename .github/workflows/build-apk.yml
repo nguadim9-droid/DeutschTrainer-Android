@@ -46,8 +46,8 @@ jobs:
           # 4. Insert TTS queries into AndroidManifest.xml
           sed -i '/<application/i \    <queries><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries>' /tmp/app/android/app/src/main/AndroidManifest.xml
 
-          # 5. Set minSdkVersion to 24 for flutter_tts compatibility
-          python3 -c "import glob; [open(f,'w').write(open(f).read().replace('flutter.minSdkVersion','24')) for f in glob.glob('/tmp/app/android/app/build.gradle*')]"
+          # 5. Set minSdkVersion to 24 via local.properties (clean, without touching build.gradle.kts)
+          echo "flutter.minSdkVersion=24" >> /tmp/app/android/local.properties
 
           # 6. Run unit tests
           flutter test
