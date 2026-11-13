@@ -32,7 +32,8 @@ jobs:
           flutter create --platforms=android --org com.deutschtrainer .
           rm -f test/widget_test.dart
           sed -i '/<application/i \    <queries><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries>' android/app/src/main/AndroidManifest.xml
-          python3 -c "import re; p='android/app/build.gradle'; t=open(p).read(); t=re.sub(r'minSdk(Version)?\s*=?\s*flutter\.minSdkVersion', 'minSdkVersion 24', t); t=re.sub(r'minSdk\s*=\s*flutter\.minSdkVersion', 'minSdk = 24', t); open(p,'w').write(t)"
+          echo "flutter.minSdkVersion=24" >> android/local.properties
+          python3 -c "import glob; [open(f,'w').write(open(f).read().replace('flutter.minSdkVersion','24')) for f in glob.glob('android/app/build.gradle*')]"
 
       - name: Install Dependencies
         run: flutter pub get
