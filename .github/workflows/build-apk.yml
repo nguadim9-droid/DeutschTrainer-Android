@@ -27,12 +27,14 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Generate Android Scaffolding with Flutter CLI
+      - name: Scaffold Official Flutter Android Scaffolding
         run: |
-          flutter create --platforms=android --org com.deutschtrainer .
+          flutter create -t app --org com.deutschtrainer --platforms=android /tmp/clean_app
+          cp -r /tmp/clean_app/android ./android
+          cp /tmp/clean_app/.metadata ./.metadata
+          rm -rf /tmp/clean_app
           rm -f test/widget_test.dart
           sed -i '/<application/i \    <queries><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries>' android/app/src/main/AndroidManifest.xml
-          echo "flutter.minSdkVersion=24" >> android/local.properties
           python3 -c "import glob; [open(f,'w').write(open(f).read().replace('flutter.minSdkVersion','24')) for f in glob.glob('android/app/build.gradle*')]"
 
       - name: Install Dependencies
