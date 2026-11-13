@@ -43,11 +43,14 @@ jobs:
           cp -rf "$GITHUB_WORKSPACE/test/domain/"* /tmp/app/test/domain/
           rm -f /tmp/app/test/widget_test.dart
 
-          # 4. Insert TTS queries into AndroidManifest.xml
+          # 4. Insert tools namespace, overrideLibrary for flutter_tts, and TTS queries into AndroidManifest.xml
+          sed -i 's/<manifest /<manifest xmlns:tools="http:\/\/schemas.android.com\/tools" /' /tmp/app/android/app/src/main/AndroidManifest.xml
+          sed -i '/<application/i \    <uses-sdk tools:overrideLibrary="com.eyedeadevelopment.fluttertts" />' /tmp/app/android/app/src/main/AndroidManifest.xml
           sed -i '/<application/i \    <queries><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries>' /tmp/app/android/app/src/main/AndroidManifest.xml
 
-          # 5. Set minSdkVersion to 24 via local.properties (clean, without touching build.gradle.kts)
-          echo "flutter.minSdkVersion=24" >> /tmp/app/android/local.properties
+          # 5. Set minSdk to 24 in build.gradle / build.gradle.kts
+          find /tmp/app/android/app -name "build.gradle*" -exec sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/g' {} +
+          find /tmp/app/android/app -name "build.gradle*" -exec sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/g' {} +
 
           # 6. Run unit tests
           flutter test
