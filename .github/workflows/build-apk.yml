@@ -27,25 +27,37 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Scaffold Official Flutter Android Scaffolding
+      - name: Assemble & Build App in Canonical Flutter Workspace
         run: |
-          flutter create -t app --org com.deutschtrainer --platforms=android /tmp/clean_app
-          cp -r /tmp/clean_app/android ./android
-          cp /tmp/clean_app/.metadata ./.metadata
-          rm -rf /tmp/clean_app
-          rm -f test/widget_test.dart
-          sed -i '/<application/i \    <queries><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries>' android/app/src/main/AndroidManifest.xml
-          python3 -c "import glob; [open(f,'w').write(open(f).read().replace('flutter.minSdkVersion','24')) for f in glob.glob('android/app/build.gradle*')]"
+          # 1. Create fresh canonical Flutter app
+          flutter create -t app --org com.deutschtrainer --project-name deutschtrainer_android /tmp/app
+          cd /tmp/app
 
-      - name: Install Dependencies
-        run: flutter pub get
+          # 2. Add dependencies
+          flutter pub add provider flutter_tts path_provider sqflite path archive
+          flutter pub add flutter_localizations --sdk=flutter
 
-      - name: Run Unit Tests
-        run: flutter test
+          # 3. Copy our Dart source code and unit tests
+          cp -rf "$GITHUB_WORKSPACE/lib/"* /tmp/app/lib/
+          mkdir -p /tmp/app/test/domain
+          cp -rf "$GITHUB_WORKSPACE/test/domain/"* /tmp/app/test/domain/
+          rm -f /tmp/app/test/widget_test.dart
 
-      - name: Build Android APK
-        run: |
+          # 4. Insert TTS queries into AndroidManifest.xml
+          sed -i '/<application/i \    <queries><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries>' /tmp/app/android/app/src/main/AndroidManifest.xml
+
+          # 5. Set minSdkVersion to 24 for flutter_tts compatibility
+          python3 -c "import glob; [open(f,'w').write(open(f).read().replace('flutter.minSdkVersion','24')) for f in glob.glob('/tmp/app/android/app/build.gradle*')]"
+
+          # 6. Run unit tests
+          flutter test
+
+          # 7. Build Debug APK
           flutter build apk --debug
+
+          # 8. Copy output APK to repository workspace for artifact upload
+          mkdir -p "$GITHUB_WORKSPACE/build/app/outputs/flutter-apk"
+          cp -f /tmp/app/build/app/outputs/flutter-apk/*.apk "$GITHUB_WORKSPACE/build/app/outputs/flutter-apk/"
 
       - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
