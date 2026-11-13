@@ -52,13 +52,17 @@ jobs:
           find /tmp/app/android/app -name "build.gradle*" -exec sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/g' {} +
           find /tmp/app/android/app -name "build.gradle*" -exec sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/g' {} +
 
-          # 6. Run unit tests
+          # 6. Upgrade Kotlin to 2.1.0 and suppress metadata version errors for flutter_tts
+          sed -i -E 's/id\("org.jetbrains.kotlin.android"\) version "[^"]+"/id("org.jetbrains.kotlin.android") version "2.1.0"/' /tmp/app/android/settings.gradle.kts || true
+          echo "kotlin.suppressUnsupportedVersionErrors=true" >> /tmp/app/android/gradle.properties
+
+          # 7. Run unit tests
           flutter test
 
-          # 7. Build Debug APK
+          # 8. Build Debug APK
           flutter build apk --debug
 
-          # 8. Copy output APK to repository workspace for artifact upload
+          # 9. Copy output APK to repository workspace for artifact upload
           mkdir -p "$GITHUB_WORKSPACE/build/app/outputs/flutter-apk"
           cp -f /tmp/app/build/app/outputs/flutter-apk/*.apk "$GITHUB_WORKSPACE/build/app/outputs/flutter-apk/"
 
